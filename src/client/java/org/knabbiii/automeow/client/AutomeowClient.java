@@ -477,6 +477,11 @@ public class AutomeowClient implements ClientModInitializer {
         loadConfig();
         checkForUpdateAsync();
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> saveConfig());
+        registerEventHandlers();
+        registerCommands();
+    }
+
+    private static void registerEventHandlers() {
         // Count outgoing messages YOU type; start a quiet window if you typed "meow"
         ClientSendMessageEvents.CHAT.register(msg -> {
             if (msg == null) return;
@@ -538,8 +543,9 @@ public class AutomeowClient implements ClientModInitializer {
                 myMsgsSinceReply.set(MY_MESSAGES_REQUIRED); // first meow in new lobby replies instantly
             }
         });
+    }
 
-        // /automeow status & toggle, im not commenting all of this. work it out yourself
+    private static void registerCommands() {
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
             dispatcher.register(
                     literal("automeow")
@@ -767,7 +773,7 @@ public class AutomeowClient implements ClientModInitializer {
         });
     }
 
-    private void handleIncoming(Text message, GameProfile sender) {
+    private static void handleIncoming(Text message, GameProfile sender) {
         if (!ENABLED.get()) return;
 
         MinecraftClient mc = MinecraftClient.getInstance();
