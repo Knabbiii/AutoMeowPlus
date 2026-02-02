@@ -4,7 +4,7 @@
 
 [![Modrinth Downloads](https://img.shields.io/modrinth/dt/automeow+?style=for-the-badge&logo=modrinth&color=f6a0d3)](https://modrinth.com/mod/automeow+)
 [![CodeFactor](https://img.shields.io/codefactor/grade/github/knabbiii/AutoMeowPlus?style=for-the-badge&logo=codefactor&color=f6a0d3&label=Code%20Quality)](https://www.codefactor.io/repository/github/knabbiii/AutoMeowPlus)
-[![License: MIT](https://img.shields.io/github/license/Knabbiii/AutoMeowPlus?color=d004f7&label=License&style=for-the-badge&logo=github)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/github/license/Knabbiii/AutoMeowPlus?color=f6a0d3&label=License&style=for-the-badge&logo=github)](https://opensource.org/licenses/MIT)
 [![GitHub release](https://img.shields.io/github/v/release/knabbiii/AutoMeowPlus?style=for-the-badge&label=Release&color=d004f7&logo=github)](https://github.com/Knabbiii/AutoMeowPlus/releases)
 
 </div>
