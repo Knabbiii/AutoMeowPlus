@@ -25,7 +25,7 @@ public class AutomeowModMenu implements ModMenuApi {
         return (Screen parent) -> {
             ConfigBuilder builder = ConfigBuilder.create()
                     .setParentScreen(parent)
-                    .setTitle(Text.literal("[AutoMeow] Settings"));
+                    .setTitle(Text.literal("[AutoMeow+] Settings"));
 
             // Save callback when user clicks "Done"
             builder.setSavingRunnable(AutomeowModMenu::saveToDisk);

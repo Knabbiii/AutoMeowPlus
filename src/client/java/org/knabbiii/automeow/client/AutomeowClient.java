@@ -559,9 +559,17 @@ public class AutomeowClient implements ClientModInitializer {
                     return on ? 1 : 0;
                 })
                 .then(buildToggleCommands())
-                .then(buildEffectCommands())
-                .then(buildConfigCommands())
-                .then(buildReplyCommands())
+                .then(buildOnCommand())
+                .then(buildOffCommand())
+                .then(buildChromaCommand())
+                .then(buildHeartsCommand())
+                .then(buildSoundCommand())
+                .then(buildMessagesCommand())
+                .then(buildCooldownCommand())
+                .then(buildAddReplyCommand())
+                .then(buildRemoveReplyCommand())
+                .then(buildListRepliesCommand())
+                .then(buildResetRepliesCommand())
                 .then(buildStatsCommands());
     }
 
@@ -575,22 +583,26 @@ public class AutomeowClient implements ClientModInitializer {
         });
     }
 
-    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource> buildEffectCommands() {
-        var on = literal("on").executes(ctx -> {
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource> buildOnCommand() {
+        return literal("on").executes(ctx -> {
             ENABLED.set(true);
             saveConfig();
             ctx.getSource().sendFeedback(statusLine(true, myMsgsSinceReply.get(), MY_MESSAGES_REQUIRED));
             return 1;
         });
+    }
 
-        var off = literal("off").executes(ctx -> {
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource> buildOffCommand() {
+        return literal("off").executes(ctx -> {
             ENABLED.set(false);
             saveConfig();
             ctx.getSource().sendFeedback(statusLine(false, myMsgsSinceReply.get(), MY_MESSAGES_REQUIRED));
             return 1;
         });
+    }
 
-        var chroma = literal("chroma").executes(ctx -> {
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource> buildChromaCommand() {
+        return literal("chroma").executes(ctx -> {
             if (!hasAaronMod()) {
                 ctx.getSource().sendFeedback(badge()
                         .append(Text.literal("Aaron-mod not found").formatted(Formatting.RED)));
@@ -609,8 +621,10 @@ public class AutomeowClient implements ClientModInitializer {
                             .formatted(newValue ? Formatting.GREEN : Formatting.RED)));
             return newValue ? 1 : 0;
         });
+    }
 
-        var hearts = literal("hearts")
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource> buildHeartsCommand() {
+        return literal("hearts")
                 .executes(ctx -> {
                     boolean newValue = !HEARTS_EFFECT.get();
                     HEARTS_EFFECT.set(newValue);
@@ -632,8 +646,10 @@ public class AutomeowClient implements ClientModInitializer {
                     ctx.getSource().sendFeedback(badge().append(Text.literal("Hearts OFF").formatted(Formatting.RED)));
                     return 1;
                 }));
+    }
 
-        var sound = literal("sound")
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource> buildSoundCommand() {
+        return literal("sound")
                 .executes(ctx -> {
                     boolean newValue = !PLAY_SOUND.get();
                     PLAY_SOUND.set(newValue);
@@ -655,12 +671,10 @@ public class AutomeowClient implements ClientModInitializer {
                     ctx.getSource().sendFeedback(badge().append(Text.literal("Cat Sound OFF").formatted(Formatting.RED)));
                     return 1;
                 }));
-
-        return on.then(off).then(chroma).then(hearts).then(sound);
     }
 
-    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource> buildConfigCommands() {
-        var messages = literal("messages")
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource> buildMessagesCommand() {
+        return literal("messages")
                 .executes(ctx -> {
                     ctx.getSource().sendFeedback(
                             badge().append(Text.literal("Message requirement: " + MY_MESSAGES_REQUIRED + " messages").formatted(Formatting.GRAY))
@@ -683,8 +697,10 @@ public class AutomeowClient implements ClientModInitializer {
                             return newValue;
                         })
                 );
+    }
 
-        var cooldown = literal("cooldown")
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource> buildCooldownCommand() {
+        return literal("cooldown")
                 .executes(ctx -> {
                     float seconds = QUIET_AFTER_SEND_MS / 1000f;
                     ctx.getSource().sendFeedback(
@@ -707,12 +723,10 @@ public class AutomeowClient implements ClientModInitializer {
                             return seconds;
                         })
                 );
-
-        return messages.then(cooldown);
     }
 
-    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource> buildReplyCommands() {
-        var addReply = literal("addreply")
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource> buildAddReplyCommand() {
+        return literal("addreply")
                 .then(net.fabricmc.fabric.api.client.command.v2.ClientCommandManager
                         .argument("reply", StringArgumentType.greedyString())
                         .executes(ctx -> {
@@ -737,8 +751,10 @@ public class AutomeowClient implements ClientModInitializer {
                             return 1;
                         })
                 );
+    }
 
-        var removeReply = literal("removereply")
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource> buildRemoveReplyCommand() {
+        return literal("removereply")
                 .then(net.fabricmc.fabric.api.client.command.v2.ClientCommandManager
                         .argument("reply", StringArgumentType.greedyString())
                         .executes(ctx -> {
@@ -762,8 +778,10 @@ public class AutomeowClient implements ClientModInitializer {
                             return 1;
                         })
                 );
+    }
 
-        var listReplies = literal("listreplies").executes(ctx -> {
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource> buildListRepliesCommand() {
+        return literal("listreplies").executes(ctx -> {
             ctx.getSource().sendFeedback(
                     badge().append(Text.literal("All replies (" + REPLY_VARIATIONS.size() + "):").formatted(Formatting.AQUA))
             );
@@ -775,8 +793,10 @@ public class AutomeowClient implements ClientModInitializer {
             }
             return REPLY_VARIATIONS.size();
         });
+    }
 
-        var resetReplies = literal("resetreplies").executes(ctx -> {
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource> buildResetRepliesCommand() {
+        return literal("resetreplies").executes(ctx -> {
             REPLY_VARIATIONS = new java.util.ArrayList<>(java.util.Arrays.asList(DEFAULT_VARIATIONS));
             saveConfig();
             ctx.getSource().sendFeedback(
@@ -784,8 +804,6 @@ public class AutomeowClient implements ClientModInitializer {
             );
             return 1;
         });
-
-        return addReply.then(removeReply).then(listReplies).then(resetReplies);
     }
 
     private static com.mojang.brigadier.builder.LiteralArgumentBuilder<net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource> buildStatsCommands() {
