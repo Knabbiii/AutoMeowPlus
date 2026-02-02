@@ -597,12 +597,14 @@ public class AutomeowClient implements ClientModInitializer {
                                         return newValue ? 1 : 0;
                                     })
                                     .then(literal("on").executes(ctx -> {
-                                        HEARTS_EFFECT.set(true); saveConfig();
+                                        HEARTS_EFFECT.set(true);
+                                        saveConfig();
                                         ctx.getSource().sendFeedback(badge().append(Text.literal("Hearts ON").formatted(Formatting.GREEN)));
                                         return 1;
                                     }))
                                     .then(literal("off").executes(ctx -> {
-                                        HEARTS_EFFECT.set(false); saveConfig();
+                                        HEARTS_EFFECT.set(false);
+                                        saveConfig();
                                         ctx.getSource().sendFeedback(badge().append(Text.literal("Hearts OFF").formatted(Formatting.RED)));
                                         return 1;
                                     }))
@@ -619,12 +621,14 @@ public class AutomeowClient implements ClientModInitializer {
                                         return newValue ? 1 : 0;
                                     })
                                     .then(literal("on").executes(ctx -> {
-                                        PLAY_SOUND.set(true); saveConfig();
+                                        PLAY_SOUND.set(true);
+                                        saveConfig();
                                         ctx.getSource().sendFeedback(badge().append(Text.literal("Cat Sound ON").formatted(Formatting.GREEN)));
                                         return 1;
                                     }))
                                     .then(literal("off").executes(ctx -> {
-                                        PLAY_SOUND.set(false); saveConfig();
+                                        PLAY_SOUND.set(false);
+                                        saveConfig();
                                         ctx.getSource().sendFeedback(badge().append(Text.literal("Cat Sound OFF").formatted(Formatting.RED)));
                                         return 1;
                                     }))

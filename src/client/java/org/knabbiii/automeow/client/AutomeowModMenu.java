@@ -86,7 +86,10 @@ public class AutomeowModMenu implements ModMenuApi {
             general.addEntry(
                     eb.startBooleanToggle(Text.literal("Play meow sound"), AutomeowClient.PLAY_SOUND.get())
                             .setDefaultValue(true)
-                            .setSaveConsumer(val -> { AutomeowClient.PLAY_SOUND.set(val); AutomeowClient.saveConfig(); })
+                            .setSaveConsumer(val -> {
+                                AutomeowClient.PLAY_SOUND.set(val);
+                                AutomeowClient.saveConfig();
+                            })
                             .setTooltip(Text.literal("Plays a cat meow when someone says a cat-sound (you or others)."))
                             .build()
             );
@@ -95,7 +98,10 @@ public class AutomeowModMenu implements ModMenuApi {
             general.addEntry(
                     eb.startBooleanToggle(Text.literal("Show heart particles"), AutomeowClient.HEARTS_EFFECT.get())
                             .setDefaultValue(true)
-                            .setSaveConsumer(val -> { AutomeowClient.HEARTS_EFFECT.set(val); AutomeowClient.saveConfig(); })
+                            .setSaveConsumer(val -> {
+                                AutomeowClient.HEARTS_EFFECT.set(val);
+                                AutomeowClient.saveConfig();
+                            })
                             .setTooltip(Text.literal("Spawns the hearts effect around the player who meowed."))
                             .build()
             );
