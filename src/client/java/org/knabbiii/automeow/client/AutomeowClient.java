@@ -546,230 +546,258 @@ public class AutomeowClient implements ClientModInitializer {
     }
 
     private static void registerCommands() {
-        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
-            dispatcher.register(
-                    literal("automeow")
-                            .executes(ctx -> {
-                                boolean on = ENABLED.get();
-                                ctx.getSource().sendFeedback(statusLine(on, myMsgsSinceReply.get(), MY_MESSAGES_REQUIRED));
-                                return on ? 1 : 0;
-                            })
-                            .then(literal("toggle").executes(ctx -> {
-                                boolean newValue = !ENABLED.get();
-                                ENABLED.set(newValue);
-                                saveConfig();
-                                ctx.getSource().sendFeedback(statusLine(newValue, myMsgsSinceReply.get(), MY_MESSAGES_REQUIRED));
-                                return newValue ? 1 : 0;
-                            }))
-                            .then(literal("on").executes(ctx -> {
-                                ENABLED.set(true);
-                                saveConfig();
-                                ctx.getSource().sendFeedback(statusLine(true, myMsgsSinceReply.get(), MY_MESSAGES_REQUIRED));
-                                return 1;
-                            }))
-                            .then(literal("off").executes(ctx -> {
-                                ENABLED.set(false);
-                                saveConfig();
-                                ctx.getSource().sendFeedback(statusLine(false, myMsgsSinceReply.get(), MY_MESSAGES_REQUIRED));
-                                return 1;
-                            }))
-                            .then(literal("chroma").executes(ctx -> {
-                                if (!hasAaronMod()) {
-                                    ctx.getSource().sendFeedback(badge()
-                                            .append(Text.literal("Aaron-mod not found").formatted(Formatting.RED)));
-                                    return 0;
-                                }
-                                if (!aaronChromaAvailable()) {
-                                    ctx.getSource().sendFeedback(badge()
-                                            .append(Text.literal("Chroma pack is disabled").formatted(Formatting.YELLOW)));
-                                    return 0;
-                                }
-                                boolean newValue = !CHROMA_WANTED.get();
-                                CHROMA_WANTED.set(newValue);
-                                saveConfig();
-                                ctx.getSource().sendFeedback(badge()
-                                        .append(Text.literal("Chroma " + (newValue ? "ON" : "OFF"))
-                                                .formatted(newValue ? Formatting.GREEN : Formatting.RED)));
-                                return newValue ? 1 : 0;
-                            }))
-                            .then(literal("hearts")
-                                    .executes(ctx -> {
-                                        boolean newValue = !HEARTS_EFFECT.get();
-                                        HEARTS_EFFECT.set(newValue);
-                                        saveConfig();
-                                        ctx.getSource().sendFeedback(
-                                                badge().append(Text.literal("Hearts " + (newValue ? "ON" : "OFF"))
-                                                        .formatted(newValue ? Formatting.GREEN : Formatting.RED)));
-                                        return newValue ? 1 : 0;
-                                    })
-                                    .then(literal("on").executes(ctx -> {
-                                        HEARTS_EFFECT.set(true);
-                                        saveConfig();
-                                        ctx.getSource().sendFeedback(badge().append(Text.literal("Hearts ON").formatted(Formatting.GREEN)));
-                                        return 1;
-                                    }))
-                                    .then(literal("off").executes(ctx -> {
-                                        HEARTS_EFFECT.set(false);
-                                        saveConfig();
-                                        ctx.getSource().sendFeedback(badge().append(Text.literal("Hearts OFF").formatted(Formatting.RED)));
-                                        return 1;
-                                    }))
-                            )
-                            .then(literal("sound")
-                                    // `/automeow sound` -> TOGGLE
-                                    .executes(ctx -> {
-                                        boolean newValue = !PLAY_SOUND.get();
-                                        PLAY_SOUND.set(newValue);
-                                        saveConfig();
-                                        ctx.getSource().sendFeedback(
-                                                badge().append(Text.literal("Cat Sound " + (newValue ? "ON" : "OFF"))
-                                                        .formatted(newValue ? Formatting.GREEN : Formatting.RED)));
-                                        return newValue ? 1 : 0;
-                                    })
-                                    .then(literal("on").executes(ctx -> {
-                                        PLAY_SOUND.set(true);
-                                        saveConfig();
-                                        ctx.getSource().sendFeedback(badge().append(Text.literal("Cat Sound ON").formatted(Formatting.GREEN)));
-                                        return 1;
-                                    }))
-                                    .then(literal("off").executes(ctx -> {
-                                        PLAY_SOUND.set(false);
-                                        saveConfig();
-                                        ctx.getSource().sendFeedback(badge().append(Text.literal("Cat Sound OFF").formatted(Formatting.RED)));
-                                        return 1;
-                                    }))
-                            )
-                            .then(literal("messages")
-                                    .executes(ctx -> {
-                                        ctx.getSource().sendFeedback(
-                                                badge().append(Text.literal("Message requirement: " + MY_MESSAGES_REQUIRED + " messages").formatted(Formatting.GRAY))
-                                        );
-                                        return MY_MESSAGES_REQUIRED;
-                                    })
-                                    .then(net.fabricmc.fabric.api.client.command.v2.ClientCommandManager
-                                            .argument("amount", IntegerArgumentType.integer(0, 10))
-                                            .executes(ctx -> {
-                                                int newValue = IntegerArgumentType.getInteger(ctx, "amount");
-                                                MY_MESSAGES_REQUIRED = newValue;
-                                                myMsgsSinceReply.set(newValue); // reset counter to new value
-                                                saveConfig();
-                                                String msg = newValue == 0 
-                                                    ? "Message requirement disabled"
-                                                    : "Message requirement set to " + newValue + " messages";
-                                                ctx.getSource().sendFeedback(
-                                                        badge().append(Text.literal(msg).formatted(Formatting.GREEN))
-                                                );
-                                                return newValue;
-                                            })
-                                    )
-                            )
-                            .then(literal("cooldown")
-                                    .executes(ctx -> {
-                                        float seconds = QUIET_AFTER_SEND_MS / 1000f;
-                                        ctx.getSource().sendFeedback(
-                                                badge().append(Text.literal("Time cooldown: " + seconds + " seconds").formatted(Formatting.GRAY))
-                                        );
-                                        return (int) QUIET_AFTER_SEND_MS;
-                                    })
-                                    .then(net.fabricmc.fabric.api.client.command.v2.ClientCommandManager
-                                            .argument("seconds", IntegerArgumentType.integer(0, 30))
-                                            .executes(ctx -> {
-                                                int seconds = IntegerArgumentType.getInteger(ctx, "seconds");
-                                                QUIET_AFTER_SEND_MS = seconds * 1000L;
-                                                saveConfig();
-                                                String msg = seconds == 0 
-                                                    ? "Time cooldown disabled (warning: may cause echo loops!)"
-                                                    : "Time cooldown set to " + seconds + " seconds";
-                                                ctx.getSource().sendFeedback(
-                                                        badge().append(Text.literal(msg).formatted(seconds == 0 ? Formatting.YELLOW : Formatting.GREEN))
-                                                );
-                                                return seconds;
-                                            })
-                                    )
-                            )
-                            .then(literal("addreply")
-                                    .then(net.fabricmc.fabric.api.client.command.v2.ClientCommandManager
-                                            .argument("reply", StringArgumentType.greedyString())
-                                            .executes(ctx -> {
-                                                String newReply = StringArgumentType.getString(ctx, "reply");
-                                                if (newReply.isEmpty() || newReply.length() > 50) {
-                                                    ctx.getSource().sendFeedback(
-                                                            badge().append(Text.literal("Reply must be 1-50 characters").formatted(Formatting.RED))
-                                                    );
-                                                    return 0;
-                                                }
-                                                if (REPLY_VARIATIONS.contains(newReply)) {
-                                                    ctx.getSource().sendFeedback(
-                                                            badge().append(Text.literal("Reply already exists").formatted(Formatting.YELLOW))
-                                                    );
-                                                    return 0;
-                                                }
-                                                REPLY_VARIATIONS.add(newReply);
-                                                saveConfig();
-                                                ctx.getSource().sendFeedback(
-                                                        badge().append(Text.literal("Added reply: \"" + newReply + "\"").formatted(Formatting.GREEN))
-                                                );
-                                                return 1;
-                                            })
-                                    )
-                            )
-                            .then(literal("removereply")
-                                    .then(net.fabricmc.fabric.api.client.command.v2.ClientCommandManager
-                                            .argument("reply", StringArgumentType.greedyString())
-                                            .executes(ctx -> {
-                                                String replyToRemove = StringArgumentType.getString(ctx, "reply");
-                                                if (REPLY_VARIATIONS.size() <= 1) {
-                                                    ctx.getSource().sendFeedback(
-                                                            badge().append(Text.literal("Cannot remove last reply").formatted(Formatting.RED))
-                                                    );
-                                                    return 0;
-                                                }
-                                                if (!REPLY_VARIATIONS.remove(replyToRemove)) {
-                                                    ctx.getSource().sendFeedback(
-                                                            badge().append(Text.literal("Reply not found").formatted(Formatting.RED))
-                                                    );
-                                                    return 0;
-                                                }
-                                                saveConfig();
-                                                ctx.getSource().sendFeedback(
-                                                        badge().append(Text.literal("Removed reply: \"" + replyToRemove + "\"").formatted(Formatting.GREEN))
-                                                );
-                                                return 1;
-                                            })
-                                    )
-                            )
-                            .then(literal("listreplies").executes(ctx -> {
-                                ctx.getSource().sendFeedback(
-                                        badge().append(Text.literal("All replies (" + REPLY_VARIATIONS.size() + "):").formatted(Formatting.AQUA))
-                                );
-                                for (int i = 0; i < REPLY_VARIATIONS.size(); i++) {
-                                    ctx.getSource().sendFeedback(
-                                            Text.literal("  " + (i + 1) + ". ").formatted(Formatting.GRAY)
-                                                    .append(Text.literal(REPLY_VARIATIONS.get(i)).formatted(Formatting.WHITE))
-                                    );
-                                }
-                                return REPLY_VARIATIONS.size();
-                            }))
-                            .then(literal("resetreplies").executes(ctx -> {
-                                REPLY_VARIATIONS = new java.util.ArrayList<>(java.util.Arrays.asList(DEFAULT_VARIATIONS));
-                                saveConfig();
-                                ctx.getSource().sendFeedback(
-                                        badge().append(Text.literal("Reset to " + DEFAULT_VARIATIONS.length + " default replies").formatted(Formatting.GREEN))
-                                );
-                                return 1;
-                            }))
-                            .then(literal("meows").executes(ctx -> {
-                                int count = meowCount.get();
-                                ctx.getSource().sendFeedback(
-                                        badge()
-                                                .append(Text.literal("You have meowed ").formatted(Formatting.WHITE))
-                                                .append(Text.literal(String.valueOf(count)).formatted(Formatting.AQUA))
-                                                .append(Text.literal(" times :3").formatted(Formatting.WHITE))
-                                );
-                                return count;
-                            }))
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> 
+            dispatcher.register(buildAutomeowCommand())
+        );
+    }
 
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource> buildAutomeowCommand() {
+        return literal("automeow")
+                .executes(ctx -> {
+                    boolean on = ENABLED.get();
+                    ctx.getSource().sendFeedback(statusLine(on, myMsgsSinceReply.get(), MY_MESSAGES_REQUIRED));
+                    return on ? 1 : 0;
+                })
+                .then(buildToggleCommands())
+                .then(buildEffectCommands())
+                .then(buildConfigCommands())
+                .then(buildReplyCommands())
+                .then(buildStatsCommands());
+    }
+
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource> buildToggleCommands() {
+        return literal("toggle").executes(ctx -> {
+            boolean newValue = !ENABLED.get();
+            ENABLED.set(newValue);
+            saveConfig();
+            ctx.getSource().sendFeedback(statusLine(newValue, myMsgsSinceReply.get(), MY_MESSAGES_REQUIRED));
+            return newValue ? 1 : 0;
+        });
+    }
+
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource> buildEffectCommands() {
+        var on = literal("on").executes(ctx -> {
+            ENABLED.set(true);
+            saveConfig();
+            ctx.getSource().sendFeedback(statusLine(true, myMsgsSinceReply.get(), MY_MESSAGES_REQUIRED));
+            return 1;
+        });
+
+        var off = literal("off").executes(ctx -> {
+            ENABLED.set(false);
+            saveConfig();
+            ctx.getSource().sendFeedback(statusLine(false, myMsgsSinceReply.get(), MY_MESSAGES_REQUIRED));
+            return 1;
+        });
+
+        var chroma = literal("chroma").executes(ctx -> {
+            if (!hasAaronMod()) {
+                ctx.getSource().sendFeedback(badge()
+                        .append(Text.literal("Aaron-mod not found").formatted(Formatting.RED)));
+                return 0;
+            }
+            if (!aaronChromaAvailable()) {
+                ctx.getSource().sendFeedback(badge()
+                        .append(Text.literal("Chroma pack is disabled").formatted(Formatting.YELLOW)));
+                return 0;
+            }
+            boolean newValue = !CHROMA_WANTED.get();
+            CHROMA_WANTED.set(newValue);
+            saveConfig();
+            ctx.getSource().sendFeedback(badge()
+                    .append(Text.literal("Chroma " + (newValue ? "ON" : "OFF"))
+                            .formatted(newValue ? Formatting.GREEN : Formatting.RED)));
+            return newValue ? 1 : 0;
+        });
+
+        var hearts = literal("hearts")
+                .executes(ctx -> {
+                    boolean newValue = !HEARTS_EFFECT.get();
+                    HEARTS_EFFECT.set(newValue);
+                    saveConfig();
+                    ctx.getSource().sendFeedback(
+                            badge().append(Text.literal("Hearts " + (newValue ? "ON" : "OFF"))
+                                    .formatted(newValue ? Formatting.GREEN : Formatting.RED)));
+                    return newValue ? 1 : 0;
+                })
+                .then(literal("on").executes(ctx -> {
+                    HEARTS_EFFECT.set(true);
+                    saveConfig();
+                    ctx.getSource().sendFeedback(badge().append(Text.literal("Hearts ON").formatted(Formatting.GREEN)));
+                    return 1;
+                }))
+                .then(literal("off").executes(ctx -> {
+                    HEARTS_EFFECT.set(false);
+                    saveConfig();
+                    ctx.getSource().sendFeedback(badge().append(Text.literal("Hearts OFF").formatted(Formatting.RED)));
+                    return 1;
+                }));
+
+        var sound = literal("sound")
+                .executes(ctx -> {
+                    boolean newValue = !PLAY_SOUND.get();
+                    PLAY_SOUND.set(newValue);
+                    saveConfig();
+                    ctx.getSource().sendFeedback(
+                            badge().append(Text.literal("Cat Sound " + (newValue ? "ON" : "OFF"))
+                                    .formatted(newValue ? Formatting.GREEN : Formatting.RED)));
+                    return newValue ? 1 : 0;
+                })
+                .then(literal("on").executes(ctx -> {
+                    PLAY_SOUND.set(true);
+                    saveConfig();
+                    ctx.getSource().sendFeedback(badge().append(Text.literal("Cat Sound ON").formatted(Formatting.GREEN)));
+                    return 1;
+                }))
+                .then(literal("off").executes(ctx -> {
+                    PLAY_SOUND.set(false);
+                    saveConfig();
+                    ctx.getSource().sendFeedback(badge().append(Text.literal("Cat Sound OFF").formatted(Formatting.RED)));
+                    return 1;
+                }));
+
+        return on.then(off).then(chroma).then(hearts).then(sound);
+    }
+
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource> buildConfigCommands() {
+        var messages = literal("messages")
+                .executes(ctx -> {
+                    ctx.getSource().sendFeedback(
+                            badge().append(Text.literal("Message requirement: " + MY_MESSAGES_REQUIRED + " messages").formatted(Formatting.GRAY))
+                    );
+                    return MY_MESSAGES_REQUIRED;
+                })
+                .then(net.fabricmc.fabric.api.client.command.v2.ClientCommandManager
+                        .argument("amount", IntegerArgumentType.integer(0, 10))
+                        .executes(ctx -> {
+                            int newValue = IntegerArgumentType.getInteger(ctx, "amount");
+                            MY_MESSAGES_REQUIRED = newValue;
+                            myMsgsSinceReply.set(newValue);
+                            saveConfig();
+                            String msg = newValue == 0 
+                                ? "Message requirement disabled"
+                                : "Message requirement set to " + newValue + " messages";
+                            ctx.getSource().sendFeedback(
+                                    badge().append(Text.literal(msg).formatted(Formatting.GREEN))
+                            );
+                            return newValue;
+                        })
+                );
+
+        var cooldown = literal("cooldown")
+                .executes(ctx -> {
+                    float seconds = QUIET_AFTER_SEND_MS / 1000f;
+                    ctx.getSource().sendFeedback(
+                            badge().append(Text.literal("Time cooldown: " + seconds + " seconds").formatted(Formatting.GRAY))
+                    );
+                    return (int) QUIET_AFTER_SEND_MS;
+                })
+                .then(net.fabricmc.fabric.api.client.command.v2.ClientCommandManager
+                        .argument("seconds", IntegerArgumentType.integer(0, 30))
+                        .executes(ctx -> {
+                            int seconds = IntegerArgumentType.getInteger(ctx, "seconds");
+                            QUIET_AFTER_SEND_MS = seconds * 1000L;
+                            saveConfig();
+                            String msg = seconds == 0 
+                                ? "Time cooldown disabled (warning: may cause echo loops!)"
+                                : "Time cooldown set to " + seconds + " seconds";
+                            ctx.getSource().sendFeedback(
+                                    badge().append(Text.literal(msg).formatted(seconds == 0 ? Formatting.YELLOW : Formatting.GREEN))
+                            );
+                            return seconds;
+                        })
+                );
+
+        return messages.then(cooldown);
+    }
+
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource> buildReplyCommands() {
+        var addReply = literal("addreply")
+                .then(net.fabricmc.fabric.api.client.command.v2.ClientCommandManager
+                        .argument("reply", StringArgumentType.greedyString())
+                        .executes(ctx -> {
+                            String newReply = StringArgumentType.getString(ctx, "reply");
+                            if (newReply.isEmpty() || newReply.length() > 50) {
+                                ctx.getSource().sendFeedback(
+                                        badge().append(Text.literal("Reply must be 1-50 characters").formatted(Formatting.RED))
+                                );
+                                return 0;
+                            }
+                            if (REPLY_VARIATIONS.contains(newReply)) {
+                                ctx.getSource().sendFeedback(
+                                        badge().append(Text.literal("Reply already exists").formatted(Formatting.YELLOW))
+                                );
+                                return 0;
+                            }
+                            REPLY_VARIATIONS.add(newReply);
+                            saveConfig();
+                            ctx.getSource().sendFeedback(
+                                    badge().append(Text.literal("Added reply: \"" + newReply + "\"").formatted(Formatting.GREEN))
+                            );
+                            return 1;
+                        })
+                );
+
+        var removeReply = literal("removereply")
+                .then(net.fabricmc.fabric.api.client.command.v2.ClientCommandManager
+                        .argument("reply", StringArgumentType.greedyString())
+                        .executes(ctx -> {
+                            String replyToRemove = StringArgumentType.getString(ctx, "reply");
+                            if (REPLY_VARIATIONS.size() <= 1) {
+                                ctx.getSource().sendFeedback(
+                                        badge().append(Text.literal("Cannot remove last reply").formatted(Formatting.RED))
+                                );
+                                return 0;
+                            }
+                            if (!REPLY_VARIATIONS.remove(replyToRemove)) {
+                                ctx.getSource().sendFeedback(
+                                        badge().append(Text.literal("Reply not found").formatted(Formatting.RED))
+                                );
+                                return 0;
+                            }
+                            saveConfig();
+                            ctx.getSource().sendFeedback(
+                                    badge().append(Text.literal("Removed reply: \"" + replyToRemove + "\"").formatted(Formatting.GREEN))
+                            );
+                            return 1;
+                        })
+                );
+
+        var listReplies = literal("listreplies").executes(ctx -> {
+            ctx.getSource().sendFeedback(
+                    badge().append(Text.literal("All replies (" + REPLY_VARIATIONS.size() + "):").formatted(Formatting.AQUA))
             );
+            for (int i = 0; i < REPLY_VARIATIONS.size(); i++) {
+                ctx.getSource().sendFeedback(
+                        Text.literal("  " + (i + 1) + ". ").formatted(Formatting.GRAY)
+                                .append(Text.literal(REPLY_VARIATIONS.get(i)).formatted(Formatting.WHITE))
+                );
+            }
+            return REPLY_VARIATIONS.size();
+        });
+
+        var resetReplies = literal("resetreplies").executes(ctx -> {
+            REPLY_VARIATIONS = new java.util.ArrayList<>(java.util.Arrays.asList(DEFAULT_VARIATIONS));
+            saveConfig();
+            ctx.getSource().sendFeedback(
+                    badge().append(Text.literal("Reset to " + DEFAULT_VARIATIONS.length + " default replies").formatted(Formatting.GREEN))
+            );
+            return 1;
+        });
+
+        return addReply.then(removeReply).then(listReplies).then(resetReplies);
+    }
+
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource> buildStatsCommands() {
+        return literal("meows").executes(ctx -> {
+            int count = meowCount.get();
+            ctx.getSource().sendFeedback(
+                    badge()
+                            .append(Text.literal("You have meowed ").formatted(Formatting.WHITE))
+                            .append(Text.literal(String.valueOf(count)).formatted(Formatting.AQUA))
+                            .append(Text.literal(" times :3").formatted(Formatting.WHITE))
+            );
+            return count;
         });
     }
 
