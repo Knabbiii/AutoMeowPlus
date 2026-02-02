@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "automeowplus",
+  "version": "1.0",
+  "name": "AutoMeow+",
+  "description": "Automatically replies when someone says 'meow' in chat. Features sound effects, heart particles, and achievement tracking.",
+  "authors": ["Knabbiii", "Rhynohowl"],
+  "environment": "client",
+  "entrypoints": {
+    "client": ["org.knabbiii.automeow.client.AutomeowClient"],
+    "modmenu": ["org.knabbiii.automeow.client.AutomeowModMenu"]
+  },
+  "icon": "assets/automeow/icon.png",
+  "depends": {
+    "fabricloader": ">=0.17.3",
+    "fabric-api": "*",
+    "minecraft": ">=1.21.10"
+  }
+}
